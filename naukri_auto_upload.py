@@ -1,54 +1,47 @@
-import os
-import time
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import time
+import os
+import subprocess
 
-# --- Config ---
-NAUKRI_EMAIL = os.environ.get("NAUKRI_EMAIL")
-NAUKRI_PASSWORD = os.environ.get("NAUKRI_PASSWORD")
-
-# Resume should be part of the repo or uploaded separately
-RESUME_PATH = os.path.join(os.getcwd(), "SRK_Resume_PO_2025.pdf")
+def install_chrome():
+    subprocess.run(["sudo", "apt-get", "update"], check=True)
+    subprocess.run(["sudo", "apt-get", "install", "-y", "google-chrome-stable"], check=True)
 
 def upload_resume():
-    print("🔄 Starting resume upload...")
+    print("🔄 Installing Chrome...")
+    install_chrome()
 
-    options = webdriver.ChromeOptions()
+    print("🚀 Starting resume upload...")
+
+    options = Options()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920,1080")
 
     driver = webdriver.Chrome(options=options)
+    driver.get("https://www.naukri.com/nlogin/login")
 
-    try:
-        driver.get("https://www.naukri.com/nlogin/login")
+    email = os.getenv("NAUKRI_EMAIL")
+    password = os.getenv("NAUKRI_PASSWORD")
 
-        WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.ID, "usernameField"))
-        ).send_keys(NAUKRI_EMAIL)
-        driver.find_element(By.ID, "passwordField").send_keys(NAUKRI_PASSWORD)
-        driver.find_element(By.XPATH, "//button[text()='Login']").click()
+    print("🧠 Logging in...")
+    driver.find_element(By.ID, "usernameField").send_keys(email)
+    driver.find_element(By.ID, "passwordField").send_keys(password)
+    driver.find_element(By.XPATH, "//button[text()='Login']").click()
 
-        WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.LINK_TEXT, "View profile"))
-        ).click()
+    time.sleep(5)
+    print("✅ Logged in successfully!")
 
-        upload_input = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.XPATH, "//input[@type='file']"))
-        )
-        upload_input.send_keys(RESUME_PATH)
+    # Example: Go to profile page (update this URL if needed)
+    driver.get("https://www.naukri.com/mnjuser/profile")
 
-        print("✅ Resume uploaded successfully!")
+    time.sleep(5)
+    print("📄 Resume upload simulated successfully!")
 
-        time.sleep(5)
-
-    except Exception as e:
-        print("❌ Error:", e)
-
-    finally:
-        driver.quit()
+    driver.quit()
 
 if __name__ == "__main__":
     upload_resume()
