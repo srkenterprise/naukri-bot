@@ -1,9 +1,9 @@
-name: Naukri Resume Auto Upload
+name: Daily Naukri Bot
 
 on:
   schedule:
-    - cron: '30 0 * * *'  # Runs every day at 06:00 AM IST
-  workflow_dispatch:
+    - cron: "30 0 * * *" # Runs every day at 6:00 AM IST (which is 12:30 AM UTC)
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   run-bot:
@@ -11,21 +11,28 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg unzip
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt install -y ./google-chrome-stable_current_amd64.deb
+          google-chrome --version
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y chromium-browser chromium-chromedriver
-          pip install -r requirements.txt
+          pip install selenium
 
-      - name: Run bot
+      - name: Run bot script
         env:
           NAUKRI_EMAIL: ${{ secrets.NAUKRI_EMAIL }}
           NAUKRI_PASSWORD: ${{ secrets.NAUKRI_PASSWORD }}
-        run: python naukri_auto_upload.py
+        run: |
+          python naukri_auto_upload.py
