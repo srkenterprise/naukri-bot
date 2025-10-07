@@ -2,16 +2,16 @@ name: Daily Naukri Bot
 
 on:
   schedule:
-    - cron: "30 0 * * *" # Runs every day at 6:00 AM IST (which is 12:30 AM UTC)
-  workflow_dispatch: # Allow manual trigger
+    - cron: "30 0 * * *" # Runs daily at 6:00 AM IST (12:30 AM UTC)
+  workflow_dispatch: # Allows manual run
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -22,15 +22,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget gnupg unzip
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo apt install -y ./google-chrome-stable_current_amd64.deb
           google-chrome --version
 
-      - name: Install dependencies
+      - name: Install ChromeDriver
+        run: |
+          CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d '.' -f 1)
+          LATEST_DRIVER=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}")
+          wget -q "https://chromedriver.storage.googleapis.com/${LATEST_DRIVER}/chromedriver_linux64.zip"
+          unzip chromedriver_linux64.zip
+          sudo mv chromedriver /usr/local/bin/
+          chromedriver --version
+
+      - name: Install Python dependencies
         run: |
           pip install selenium
 
-      - name: Run bot script
+      - name: Run Naukri Bot
         env:
           NAUKRI_EMAIL: ${{ secrets.NAUKRI_EMAIL }}
           NAUKRI_PASSWORD: ${{ secrets.NAUKRI_PASSWORD }}
